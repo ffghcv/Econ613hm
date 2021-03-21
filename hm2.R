@@ -14,6 +14,23 @@ print(dispersion)
 average=apply(as.matrix(choiceprice[,3:12]),2,mean)
 print(average)
 #Market share, and market share by choiceprice characteristics.
+
+#by choice frequency
+share_choicefrequency <- cbind(sum(choiceprice$choice == 1), 
+                               sum(choiceprice$choice == 2),
+                               sum(choiceprice$choice == 3),
+                               sum(choiceprice$choice == 4),
+                               sum(choiceprice$choice == 5),
+                               sum(choiceprice$choice == 6),
+                               sum(choiceprice$choice == 7),
+                               sum(choiceprice$choice == 8),
+                               sum(choiceprice$choice == 9),
+                               sum(choiceprice$choice == 10))/ dim(choiceprice)[1]
+
+colnames(share_choicefrequency) <- c("pk_stk", "bb_stk", "fl_stk", "hse_stk", "gen_stk", 
+                            "imp_stk", "ss_tub", "pk_tub", "fl_tub" ,"hse_tub")
+
+
 choiceprice$sales <-  ifelse(choiceprice$choice == 1, choiceprice$PPk_Stk,
                 ifelse(choiceprice$choice == 2, choiceprice$PBB_Stk,
                   ifelse(choiceprice$choice == 3, choiceprice$PFl_Stk,
@@ -25,7 +42,7 @@ choiceprice$sales <-  ifelse(choiceprice$choice == 1, choiceprice$PPk_Stk,
                  ifelse(choiceprice$choice == 9, choiceprice$PFl_Tub,
                  choiceprice$PHse_Tub)))))))))
 
-share <- cbind(sum(choiceprice$sales[choiceprice$choice == 1])/ sum(choiceprice$sales),
+share_market <- cbind(sum(choiceprice$sales[choiceprice$choice == 1])/ sum(choiceprice$sales),
                sum(choiceprice$sales[choiceprice$choice == 2]) / sum(choiceprice$sales),
                sum(choiceprice$sales[choiceprice$choice == 3]) / sum(choiceprice$sales),
                sum(choiceprice$sales[choiceprice$choice == 4]) / sum(choiceprice$sales),
@@ -36,26 +53,55 @@ share <- cbind(sum(choiceprice$sales[choiceprice$choice == 1])/ sum(choiceprice$
                sum(choiceprice$sales[choiceprice$choice == 9])/ sum(choiceprice$sales),
                sum(choiceprice$sales[choiceprice$choice == 10])/ sum(choiceprice$sales)
 )
-colnames(share) <- c("pk_stk", "bb_stk", "fl_stk", "hse_stk", "gen_stk", 
+colnames(share_market) <- c("pk_stk", "bb_stk", "fl_stk", "hse_stk", "gen_stk", 
                      "imp_stk", "ss_tub", "pk_tub", "fl_tub" ,"hse_tub")
 
-share
+share_choicefrequency
+share_market
 
-share_type <- c(sum(share[,1:6]), sum(share[,7:10]))
-share_type <- rbind(c("stick", "tub") , share_type)
-share_type
+share_pricebins1 <- cbind(
+  sum((choiceprice$choice == 1) & (price[,1]>average[1])),
+  sum((choiceprice$choice == 2) & (price[,2]>average[2])),
+  sum((choiceprice$choice == 3) & (price[,3]>average[3])),
+  sum((choiceprice$choice == 4) & (price[,4]>average[4])),
+  sum((choiceprice$choice == 5) & (price[,5]>average[5])),
+  sum((choiceprice$choice == 6) & (price[,6]>average[6])),
+  sum((choiceprice$choice == 7) & (price[,7]>average[7])),
+  sum((choiceprice$choice == 8) & (price[,8]>average[8])),
+  sum((choiceprice$choice == 9) & (price[,9]>average[9])),
+  sum((choiceprice$choice == 10) & (price[,10]>average[10]))
+)
+share_pricebins2 <- cbind(
+  sum((choiceprice$choice == 1) & (price[,1]<=average[1])),
+  sum((choiceprice$choice == 2) & (price[,2]<=average[2])),
+  sum((choiceprice$choice == 3) & (price[,3]<=average[3])),
+  sum((choiceprice$choice == 4) & (price[,4]<=average[4])),
+  sum((choiceprice$choice == 5) & (price[,5]<=average[5])),
+  sum((choiceprice$choice == 6) & (price[,6]<=average[6])),
+  sum((choiceprice$choice == 7) & (price[,7]<=average[7])),
+  sum((choiceprice$choice == 8) & (price[,8]<=average[8])),
+  sum((choiceprice$choice == 9) & (price[,9]<=average[9])),
+  sum((choiceprice$choice == 10) & (price[,10]<=average[10]))
+)
+share_pricebins <- rbind(share_pricebins1, share_pricebins2)
+share_pricebins <- share_pricebins / dim(choiceprice)[1]
+colnames(share_pricebins) <- c("pk_stk", "bb_stk", "fl_stk", "hse_stk", "gen_stk", 
+                            "imp_stk", "ss_tub", "pk_tub", "fl_tub" ,"hse_tub")
+rownames(share_pricebins) <- c('overaverage','belowaverage')
+share_pricebins
+
 
 #Illustrate the mapping between observed attributes and choices.
-merge(choiceprice, demos, by = "hhid", all.x = TRUE) 
-
+temp = merge(choiceprice, demos, by = "hhid", all.x = TRUE)
+temp1 = cbind(temp[,1:2],temp[,14:20])
 
 #Exercise 2
 #Conditional logit model
-price <- as.data.frame(choiceprice[,2:12])
-colnames(price) <- c("choice","P1","P2","P3","P4","P5","P6","P7","P8","P9","P10")
+price <- as.data.frame(choiceprice[,3:12])
+colnames(price) <- c("P1","P2","P3","P4","P5","P6","P7","P8","P9","P10")
 prt = NULL
 for(i in 1:10){
-  prt <- cbind(prt, price[,i+1] - price[,1])
+  prt <- cbind(prt, price[,i] - price[,1])
 }
 k1 <- ifelse(choiceprice$choice == "1", 1, 0)
 k2 <- ifelse(choiceprice$choice == "2", 1, 0)
@@ -75,7 +121,6 @@ conlogit <- function(theta, X, Y){
   return(Y)
 }
 
-optim(c(0,0,0,0,0,0,0,0,0,0), conlogit, X=prt, method = "BFGS")$par
 m1 = as.matrix(optim(c(0,0,0,0,0,0,0,0,0,0), conlogit, X=prt, method = "BFGS")$par)
 m1
 
@@ -100,20 +145,13 @@ a <- sapply(a,rep,4470)
 a2 <- matrix(c(0),nrow = 4470,ncol = 1)
 a <- cbind(a2,a)
 
-price2 <- choiceprice[,3:12]
-c2 <- as.vector(price2[,2]-price2[,1])
-c3 <- as.vector(price2[,3]-price2[,1])
-c4 <- as.vector(price2[,4]-price2[,1])
-c5 <- as.vector(price2[,5]-price2[,1])
-c6 <- as.vector(price2[,6]-price2[,1])
-c7 <- as.vector(price2[,7]-price2[,1])
-c8 <- as.vector(price2[,8]-price2[,1])
-c9 <- as.vector(price2[,9]-price2[,1])
-c10 <- as.vector(price2[,10]-price2[,1])
-c_all <- cbind(c2,c3,c4,c5,c6,c7,c8,c9,c10)
-price3 <- matrix(c(0),nrow = 4470,ncol = 1)
-price4 <- cbind(price3,c_all)
-x = price4
+price <- as.data.frame(choiceprice[,3:12])
+prt = NULL
+for(i in 1:10){
+  prt <- cbind(prt, price[,i] - price[,1])
+}
+x <- prt
+
 vij <- x*m1[1]+a
 total <- exp(vij[,1])+exp(vij[,2])+exp(vij[,3])+exp(vij[,4])+exp(vij[,5])+exp(vij[,6])+exp(vij[,7])+exp(vij[,8])+exp(vij[,9])+exp(vij[,10])
 pij <- exp(vij)/total
