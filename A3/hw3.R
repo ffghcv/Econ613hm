@@ -158,7 +158,7 @@ X = m5[,-7]
 Y = m5[,7]
 
 X = as.matrix(X)
-beta = solve(t(X) %*% X, tol = 1e-19) %*% t(X) %*% Y
+beta = solve(t(X) %*% X %*% t(X) %*% X, tol = 1e-100) %*%t(X) %*% X %*% t(X) %*% Y
 
 colnames(m5)[1:6]
 b = as.data.frame(beta[1:6])
